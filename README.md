@@ -2,17 +2,40 @@
 
 ![Pausen — Make room for rest](assets/brand/social-preview.png)
 
+[![Release](https://img.shields.io/badge/Release-v1.10.2-amber.svg)](https://github.com/approxy-dev/Pausen-App/releases/tag/v1.10.2)
+[![Platform](https://img.shields.io/badge/Platform-Android%2010%2B-brightgreen.svg)](https://github.com/approxy-dev/Pausen-App)
+[![APK Size](https://img.shields.io/badge/APK-3.7%20MB-blue.svg)](https://github.com/approxy-dev/Pausen-App/releases/download/v1.10.2/Pausen-1.10.2.apk)
+[![Trackers](https://img.shields.io/badge/Trackers-0-success.svg)](privacy.html)
+[![Internet Permission](https://img.shields.io/badge/Internet%20Permission-None-success.svg)](privacy.html)
+
 **Download Pausen APK (v1.10.2): A quiet, privacy-first Android bedtime app and scroll pause app (formerly SleepGuardian APK).**
 
 [Download Pausen APK v1.10.2](https://github.com/approxy-dev/Pausen-App/releases/download/v1.10.2/Pausen-1.10.2.apk) · [Release notes](https://github.com/approxy-dev/Pausen-App/releases/tag/v1.10.2) · [Verify the download](downloads/SHA256SUMS.txt) · [Privacy & permissions](privacy.html)
 
 Pausen (formerly developed as SleepGuardian Mobile) runs on Android 10 and newer. Its plans and history stay on your phone; the app has no internet permission, ads, analytics, or account requirement.
 
-- **Bedtime plans:** a warm wind-down, a scheduled curfew, and a morning unlock.
-- **Scroll pauses:** breathing breaks and a 24-hour commitment to help interrupt long scrolling sessions.
-- **Clear boundaries:** protection settings and permission explanations before you commit.
+### Why choose Pausen APK?
+- 🌙 **Quiet Bedtime App:** scheduled evening wind-downs, warm screen tints, and strict bedtime curfews.
+- 🧘 **Intentional Scroll Pause App:** 12-second box-breathing pauses and a 24-hour commitment lock to interrupt endless feeds in Instagram, TikTok, and YouTube.
+- 🔒 **100% On-Device Security:** no internet permissions declared, zero analytics, zero ads, and all data stored strictly in a local SQLite database on your device.
+- 🛡️ **Verifiable Integrity:** signed APK with SHA-256 checksums provided for every release.
 
 Developed by [Approxy-dev](https://github.com/approxy-dev).
+
+## Pausen APK Specifications
+
+| Specification | Value |
+|---|---|
+| **App Name** | Pausen |
+| **Package Format** | Signed APK (Android Package) |
+| **Former Name** | SleepGuardian APK (SleepGuardian Android) |
+| **Latest Release** | v1.10.2 (Build Code 8) |
+| **File Size** | 3.7 MB (3,681,980 bytes) |
+| **Supported OS** | Android 10.0+ (API 29, 30, 31, 32, 33, 34, 35+) |
+| **Internet Access** | None (`INTERNET` permission omitted) |
+| **Trackers / Ads** | Zero (100% Offline) |
+| **SHA-256 Checksum** | `05d24758639b4f58b31db3fafffef73840f8e5d8c7408d07618b8c3e3a5cf038` |
+| **Certificate Fingerprint** | `66278ee90a47a6986d87ad3ea08f1cf3360dbbf437289e806711243428d0360b` |
 
 ## About this repository
 

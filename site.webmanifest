@@ -1,0 +1,21 @@
+{
+  "name": "Pausen — Android Bedtime App & Scroll Pause App",
+  "short_name": "Pausen",
+  "description": "Download Pausen APK (formerly SleepGuardian APK). A quiet, offline bedtime app and scroll pause app for Android.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#100D0B",
+  "theme_color": "#100D0B",
+  "icons": [
+    {
+      "src": "assets/brand/pausen-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "assets/brand/social-preview.png",
+      "sizes": "1024x500",
+      "type": "image/png"
+    }
+  ]
+}
