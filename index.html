@@ -23,7 +23,12 @@
   <meta name="twitter:description" content="Download Pausen APK (formerly SleepGuardian APK) — A quiet Android bedtime app and scroll pause app. 100% on-device privacy.">
   <meta name="twitter:image" content="assets/brand/social-preview.png">
   <!-- deployment-meta -->
-  <link rel="icon" href="assets/brand/pausen-mark.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/brand/favicon-48x48.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="assets/brand/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/brand/favicon-192x192.png">
+  <link rel="icon" type="image/svg+xml" href="assets/brand/pausen-mark.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <link rel="preload" href="assets/fonts/familjen-grotesk-latin.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="styles.css">
@@ -55,6 +60,8 @@
         "fileSize": "3.7MB",
         "fileFormat": "application/vnd.android.package-archive",
         "downloadUrl": "https://github.com/approxy-dev/Pausen-App/releases/download/v1.10.2/Pausen-1.10.2.apk",
+        "image": "https://pausenapk.vercel.app/assets/brand/favicon-512x512.png",
+        "thumbnailUrl": "https://pausenapk.vercel.app/assets/brand/favicon-192x192.png",
         "softwareRequirements": "Android 10 (API 29) or higher",
         "memoryRequirements": "50MB RAM",
         "storageRequirements": "3.7MB",
@@ -99,15 +106,21 @@
         "name": "Pausen",
         "alternateName": [
           "Pausen APK",
-          "Pausen App Download",
+          "Pausen App",
+          "Pausen Android App",
           "SleepGuardian APK",
           "Pausen Bedtime & Scroll Pause App"
         ],
+        "url": "https://pausenapk.vercel.app/",
         "description": "Official showcase and download portal for Pausen APK (formerly SleepGuardian APK) for Android.",
         "publisher": {
           "@type": "Organization",
           "name": "Approxy-dev",
-          "url": "https://github.com/approxy-dev"
+          "url": "https://github.com/approxy-dev",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://pausenapk.vercel.app/assets/brand/favicon-512x512.png"
+          }
         }
       },
       {
@@ -117,13 +130,13 @@
             "@type": "ListItem",
             "position": 1,
             "name": "Home",
-            "item": "https://pausen-app.vercel.app/"
+            "item": "https://pausenapk.vercel.app/"
           },
           {
             "@type": "ListItem",
             "position": 2,
             "name": "Pausen APK Download (SleepGuardian)",
-            "item": "https://pausen-app.vercel.app/#installation"
+            "item": "https://pausenapk.vercel.app/#installation"
           }
         ]
       },

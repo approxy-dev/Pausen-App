@@ -8,7 +8,7 @@ await mkdir(output, { recursive: true });
 for (const page of ['index.html', 'privacy.html']) {
   await writeFile(join(output, page), renderDocument(await readFile(join(root, page), 'utf8'), page, config));
 }
-for (const file of ['styles.css', 'script.js', 'google9f3fb088d8fefe90.html', 'llms.txt', 'site.webmanifest']) {
+for (const file of ['styles.css', 'script.js', 'google9f3fb088d8fefe90.html', 'llms.txt', 'site.webmanifest', 'favicon.ico', 'favicon-48x48.png', 'apple-touch-icon.png']) {
   try {
     await copyFile(join(root, file), join(output, file));
   } catch {}
@@ -25,7 +25,10 @@ const pages = [
 ];
 const urls = config.siteUrl ? pages.map(p => `  <url>\n    <loc>${escapeHtml(`${config.siteUrl}/${p.path}`)}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>`).join('\n') : '';
 await writeFile(join(output, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
-await writeFile(join(output, 'robots.txt'), config.preview ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n${config.siteUrl ? `Sitemap: ${config.siteUrl}/sitemap.xml\n` : ''}`);
+const robotsContent = config.preview
+  ? 'User-agent: *\nDisallow: /\n'
+  : `User-agent: *\nAllow: /\nAllow: /downloads/\nAllow: /assets/\nAllow: /favicon.ico\nAllow: /favicon-48x48.png\nAllow: /apple-touch-icon.png\n\nUser-agent: Googlebot-Image\nAllow: /\nAllow: /assets/\nAllow: /favicon.ico\nAllow: /favicon-48x48.png\n\nUser-agent: Googlebot-Favicon\nAllow: /\nAllow: /favicon.ico\nAllow: /favicon-48x48.png\nAllow: /assets/\n\n${config.siteUrl ? `Sitemap: ${config.siteUrl}/sitemap.xml\n` : ''}`;
+await writeFile(join(output, 'robots.txt'), robotsContent);
 console.log(`Built static site in ${output}`);
 console.log(config.siteUrl ? `Public URLs: ${config.siteUrl}` : 'No public URL yet. Local output is noindex; Vercel supplies its deployment domain automatically.');
 console.log(config.formEndpoint ? 'Contact delivery: configured form provider.' : 'Contact delivery: email draft (no message is automatically sent).');
