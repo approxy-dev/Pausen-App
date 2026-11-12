@@ -8,7 +8,11 @@ await mkdir(output, { recursive: true });
 for (const page of ['index.html', 'privacy.html']) {
   await writeFile(join(output, page), renderDocument(await readFile(join(root, page), 'utf8'), page, config));
 }
-for (const file of ['styles.css', 'script.js']) await copyFile(join(root, file), join(output, file));
+for (const file of ['styles.css', 'script.js', 'google9f3fb088d8fefe90.html', 'llms.txt']) {
+  try {
+    await copyFile(join(root, file), join(output, file));
+  } catch {}
+}
 for (const directory of ['assets', 'downloads']) await cp(join(root, directory), join(output, directory), { recursive: true });
 const urls = config.siteUrl ? ['', 'privacy.html'].map(page => `  <url><loc>${escapeHtml(`${config.siteUrl}/${page}`)}</loc></url>`).join('\n') : '';
 await writeFile(join(output, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
