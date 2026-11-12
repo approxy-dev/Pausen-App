@@ -1,0 +1,14 @@
+{
+  "name": "pausen-website",
+  "version": "1.10.2",
+  "private": true,
+  "type": "module",
+  "description": "Pausen's standalone, dependency-free Android showcase website",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "check": "node --check script.js && node scripts/check.mjs",
+    "configure": "node scripts/configure.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
