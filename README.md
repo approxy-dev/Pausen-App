@@ -1,12 +1,12 @@
-# Pausen — Android App & APK
+# Pausen — Android Bedtime App & Scroll Pause App (APK)
 
 ![Pausen — Make room for rest](assets/brand/social-preview.png)
 
-**Download Pausen APK: A quiet, privacy-first Android app for bedtime plans, scroll pauses, and warm reading.**
+**Download Pausen APK (v1.10.2): A quiet, privacy-first Android bedtime app and scroll pause app (formerly SleepGuardian APK).**
 
 [Download Pausen APK v1.10.2](https://github.com/approxy-dev/Pausen-App/releases/download/v1.10.2/Pausen-1.10.2.apk) · [Release notes](https://github.com/approxy-dev/Pausen-App/releases/tag/v1.10.2) · [Verify the download](downloads/SHA256SUMS.txt) · [Privacy & permissions](privacy.html)
 
-Pausen runs on Android 10 and newer. Its plans and history stay on your phone; the app has no internet permission, ads, analytics, or account requirement.
+Pausen (formerly developed as SleepGuardian Mobile) runs on Android 10 and newer. Its plans and history stay on your phone; the app has no internet permission, ads, analytics, or account requirement.
 
 - **Bedtime plans:** a warm wind-down, a scheduled curfew, and a morning unlock.
 - **Scroll pauses:** breathing breaks and a 24-hour commitment to help interrupt long scrolling sessions.

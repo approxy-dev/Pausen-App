@@ -1,23 +1,24 @@
-# Pausen — Android App & APK
+# Pausen — Android Bedtime App & Scroll Pause App (APK)
 
-> Pausen is a quiet, privacy-first Android application and APK for scheduled bedtime curfews, breathing scroll pauses, and warm reading mode. 100% on-device, zero ads, zero trackers, no accounts, and no internet permission.
+> Pausen (formerly developed as SleepGuardian APK / SleepGuardian Mobile) is a quiet, privacy-first Android application and standalone APK for scheduled bedtime curfews, breathing scroll pauses, and warm evening reading mode. 100% on-device, zero ads, zero trackers, no accounts, and zero internet permission.
 
-## Quick Overview
-- Application: Pausen
-- Release: v1.10.2 (Code 8)
-- File: Pausen-1.10.2.apk (3.7 MB / 3,681,980 bytes)
+## Quick Facts
+- Application Name: Pausen (Pausen APK)
+- Former Project Name: SleepGuardian APK (SleepGuardian Android)
+- App Categories: Bedtime App, Scroll Pause App, Screen Time Blocker, Digital Wellbeing
+- Latest Release: v1.10.2 (Build Code 8)
+- File Name: Pausen-1.10.2.apk (3.7 MB / 3,681,980 bytes)
 - Target OS: Android 10 (API 29) and newer (compatible with Android 10, 11, 12, 13, 14, 15+)
 - SHA-256 Checksum: 05d24758639b4f58b31db3fafffef73840f8e5d8c7408d07618b8c3e3a5cf038
 - Developer: Approxy-dev (https://github.com/approxy-dev)
 - Repository: https://github.com/approxy-dev/Pausen-App
 - Download: https://github.com/approxy-dev/Pausen-App/releases/download/v1.10.2/Pausen-1.10.2.apk
 
-## Core Capabilities
-- **Bedtime Plans:** Scheduled evening wind-down, bedtime curfew, and morning unlock.
-- **Scroll Pauses:** Box breathing breaks (4s in, 2s hold, 6s out) with an optional 24-hour commitment lock to interrupt endless social feed scrolling (Instagram, TikTok, YouTube).
-- **Warm Reading Tint:** Softer evening screen tint without blue light.
-- **Zero Internet Requirement:** The Android manifest omits the `INTERNET` permission completely. All settings, logs, and schedules stay strictly in on-device SQLite storage.
-- **Anti-Distraction Commitment:** Background protection, clock-change defense, and Settings and uninstall guard support during protected hours.
+## Primary Use Cases & Features
+1. **Bedtime App & Curfew Lock:** Schedule gentle wind-down warnings, a warm reading tint, and strict bedtime curfews to enforce sleep discipline.
+2. **Scroll Pause App:** Interrupt compulsive doomscrolling in apps like Instagram, TikTok, and YouTube with a 12-second box-breathing pause (4s in, 2s hold, 6s out) and an optional 24-hour commitment lock.
+3. **100% On-Device Privacy:** The Android manifest omits the `android.permission.INTERNET` permission completely. All settings, logs, and schedules stay strictly in on-device SQLite storage with zero telemetry, zero analytics, and zero ads.
+4. **Anti-Distraction Commitment:** Background protection, clock-change defense, and Settings and uninstall guard support during protected hours.
 
 ## Installation Instructions
 1. Download `Pausen-1.10.2.apk` directly to your Android device.
