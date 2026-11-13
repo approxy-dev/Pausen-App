@@ -4,6 +4,8 @@
 
 ## Quick Facts
 - Application Name: Pausen (Pausen APK)
+- Official Website: https://pausenapk.vercel.app/
+- Android Package ID: com.sleepguardian.app
 - Former Project Name: SleepGuardian APK (SleepGuardian Android)
 - App Categories: Bedtime App, Scroll Pause App, Screen Time Blocker, Digital Wellbeing
 - Latest Release: v1.10.2 (Build Code 8)
@@ -16,7 +18,7 @@
 
 ## Primary Use Cases & Features
 1. **Bedtime App & Curfew Lock:** Schedule gentle wind-down warnings, a warm reading tint, and strict bedtime curfews to enforce sleep discipline.
-2. **Scroll Pause App:** Interrupt compulsive doomscrolling in apps like Instagram, TikTok, and YouTube with a 12-second box-breathing pause (4s in, 2s hold, 6s out) and an optional 24-hour commitment lock.
+2. **Scroll Pause App:** Interrupt compulsive doomscrolling in apps like Instagram, TikTok, and YouTube with a 12-second breathing pause (4s in, 2s hold, 6s out) and an optional 24-hour commitment lock.
 3. **100% On-Device Privacy:** The Android manifest omits the `android.permission.INTERNET` permission completely. All settings, logs, and schedules stay strictly in on-device SQLite storage with zero telemetry, zero analytics, and zero ads.
 4. **Anti-Distraction Commitment:** Background protection, clock-change defense, and Settings and uninstall guard support during protected hours.
 

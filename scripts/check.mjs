@@ -11,11 +11,30 @@ for (const [name, html] of [['index.html', index], ['privacy.html', privacy]]) {
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length, `${name}: duplicate IDs`);
   assert.equal([...html.matchAll(/<h1\b/g)].length, 1, `${name}: one main heading`);
+  const title = html.match(/<title>([^<]+)<\/title>/)?.[1].replaceAll('&amp;', '&');
+  const description = html.match(/<meta name="description" content="([^"]+)"/)?.[1];
+  assert(title && title.length <= 60, `${name}: title exceeds the audit's 60-character budget`);
+  assert(description && description.length <= 155, `${name}: description exceeds the audit's 155-character budget`);
+  assert(!/href="\/?index\.html(?:["#?])/.test(html), `${name}: internal homepage links must use the canonical / route`);
+  for (const match of html.matchAll(/<img\b[^>]*>/g)) {
+    assert(/\balt="[^"]+"/.test(match[0]) || /\balt=""/.test(match[0]) && /(?:aria-hidden="true"|role="presentation")/.test(match[0]), `${name}: label informative images or explicitly mark them decorative`);
+  }
+  const socialPath = html.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+  assert(socialPath, `${name}: missing social preview`);
+  const social = await readFile(join(root, socialPath));
+  assert.equal(social.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+  const width = social.readUInt32BE(16);
+  const height = social.readUInt32BE(20);
+  assert(width >= 1200 && height >= 630 && Math.abs(width / height / 1.91 - 1) < 0.05, `${name}: social preview must meet the audit's size and ratio requirements`);
+  assert(html.includes(`<meta property="og:image:width" content="${width}">`));
+  assert(html.includes(`<meta property="og:image:height" content="${height}">`));
+  assert(html.includes(`<meta name="twitter:image" content="${socialPath}">`));
   for (const match of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
     const url = match[1];
     if (/^(https?:|mailto:|data:)/.test(url) || url === '#') continue;
     if (url.startsWith('#')) { assert(ids.includes(url.slice(1)), `${name}: missing anchor ${url}`); continue; }
-    const [path, anchor] = url.split('#');
+    const [route, anchor] = url.split('#');
+    const path = route === '/' ? 'index.html' : route;
     assert((await stat(join(root, path))).isFile(), `${name}: missing ${path}`);
     if (anchor && path.endsWith('.html')) assert((await readFile(join(root, path), 'utf8')).includes(`id="${anchor}"`), `${name}: missing ${url}`);
   }
@@ -39,13 +58,46 @@ assert(local.includes('noindex, nofollow'));
 assert(local.includes('data-delivery="email"'));
 const deployed = renderDocument(index, 'index.html', { siteUrl: 'https://pausen.example', formEndpoint: 'https://formspree.io/f/test', preview: false });
 assert(deployed.includes('rel="canonical" href="https://pausen.example/"'));
-assert(deployed.includes('content="https://pausen.example/assets/brand/social-preview.png"'));
+assert(deployed.includes('content="https://pausen.example/assets/brand/social-preview-wide.png"'));
 assert(deployed.includes('method="post" data-delivery="provider"'));
 assert(!deployed.includes('noindex, nofollow'));
 assert(deployed.includes('id="submit-label">Send message'));
+const structuredData = JSON.parse(deployed.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+const graph = structuredData['@graph'];
+const website = graph.find(item => item['@type'] === 'WebSite');
+const application = graph.find(item => item['@type'] === 'SoftwareApplication');
+assert.equal(website.name, 'Pausen');
+assert.equal(website.url, 'https://pausen.example/');
+assert.equal(application.url, website.url);
+assert.equal(application.downloadUrl, 'https://pausen.example/downloads/Pausen-1.10.2.apk');
+assert.equal(application.identifier, 'com.sleepguardian.app');
+assert(!JSON.stringify(structuredData).includes('https://pausenapk.vercel.app'), 'Structured data must use the configured canonical origin');
+const entityIds = new Set(graph.map(item => item['@id']));
+for (const match of JSON.stringify(structuredData).matchAll(/"@id":"([^"]+)"/g)) {
+  assert(entityIds.has(match[1]), `Structured data has a dangling entity reference: ${match[1]}`);
+}
+const visibleText = index.split('<body>')[1].replace(/<[^>]*>/g, ' ').replaceAll('&amp;', '&').replace(/\s+/g, ' ');
+for (const question of graph.find(item => item['@type'] === 'FAQPage').mainEntity) {
+  assert(visibleText.includes(question.name), `FAQ question is missing from the visible page: ${question.name}`);
+  assert(visibleText.includes(question.acceptedAnswer.text), `FAQ answer differs from the visible page: ${question.name}`);
+}
+for (const html of [index, privacy]) {
+  const pngIcon = html.match(/<link rel="icon" href="([^"]+)" type="image\/png" sizes="(\d+)x(\d+)">/);
+  assert(pngIcon, 'Each page must declare a PNG favicon');
+  const png = await readFile(join(root, pngIcon[1]));
+  assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', 'The declared favicon must be a PNG');
+  assert.equal(png.readUInt32BE(16), Number(pngIcon[2]));
+  assert.equal(png.readUInt32BE(20), Number(pngIcon[3]));
+  assert.equal(pngIcon[2], pngIcon[3], 'The search favicon must be square');
+  assert(Number(pngIcon[2]) > 48, 'Use a favicon larger than 48 pixels');
+}
+const preview = renderDocument(index, 'index.html', { siteUrl: 'https://pausen.example', formEndpoint: '', preview: true });
+assert(preview.includes('noindex, nofollow'), 'Preview deployments must remain noindex');
+const vercel = JSON.parse(await readFile(join(root, 'vercel.json'), 'utf8'));
+assert(vercel.redirects.some(rule => rule.source === '/index.html' && rule.destination === '/' && rule.permanent), 'Production must redirect the duplicate homepage');
 const providerPrivacy = renderDocument(privacy, 'privacy.html', { siteUrl: 'https://pausen.example', formEndpoint: 'https://formspree.io/f/test' });
 assert(providerPrivacy.includes('configured form provider'));
 assert(!providerPrivacy.includes('It does not send a message automatically'));
 assert.throws(() => validateSiteUrl('https://site.example/not-the-root'));
 assert.throws(() => validateFormEndpoint('javascript:alert(1)'));
-console.log(`PASS: page links and anchors, APK integrity, deployment metadata, contact modes, and URL validation.\nInitial page assets: ${(raw / 1024).toFixed(1)} KiB raw / ${(transferred / 1024).toFixed(1)} KiB gzip (45 KiB transfer budget).\nAPK: ${apk.length} bytes; SHA-256 verified.`);
+console.log(`PASS: canonical links and redirect, metadata budgets, social preview dimensions, image alternatives, APK integrity, favicons, linked site/app metadata, visible FAQs, preview indexing controls, contact modes, and URL validation.\nInitial page assets: ${(raw / 1024).toFixed(1)} KiB raw / ${(transferred / 1024).toFixed(1)} KiB gzip (45 KiB transfer budget).\nAPK: ${apk.length} bytes; SHA-256 verified.`);

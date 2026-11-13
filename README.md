@@ -1,6 +1,6 @@
 # Pausen — Android Bedtime App & Scroll Pause App (APK)
 
-![Pausen — Make room for rest](assets/brand/social-preview.png)
+![Pausen — Make room for rest](assets/brand/social-preview-wide.png)
 
 [![Release](https://img.shields.io/badge/Release-v1.10.2-amber.svg)](https://github.com/approxy-dev/Pausen-App/releases/tag/v1.10.2)
 [![Platform](https://img.shields.io/badge/Platform-Android%2010%2B-brightgreen.svg)](https://github.com/approxy-dev/Pausen-App)
@@ -90,6 +90,18 @@ That command's hostname is an example: use the real domain after it exists. With
 
 See Vercel's [build configuration](https://vercel.com/docs/builds/configure-a-build) and [system environment variables](https://vercel.com/docs/environment-variables/system-environment-variables).
 
+## Search appearance
+
+The homepage identifies Pausen, Approxy-dev, and the Android package `com.sleepguardian.app` in visible content and linked `WebSite`, `WebPage`, and `SoftwareApplication` metadata. Structured URLs follow the configured canonical origin. No unverified star ratings are published.
+
+Both pages declare the existing 96×96 PNG favicon and root ICO at stable URLs. The preview serves these files with their image MIME types, and the build fails if required public assets cannot be copied. `npm run check` verifies icon dimensions, metadata relationships, and visible FAQ consistency.
+
+The crawl-report fixes keep titles under 60 characters and descriptions under 155, give logo images descriptive alternatives and titles, and use a 1717×916 social preview for both Open Graph and X. `/index.html` permanently redirects to `/`; internal links use the canonical homepage. Multiple H2 headings are intentional sections beneath each page's single H1, not an SEO error.
+
+After a production deployment, use Search Console's URL Inspection on `https://pausenapk.vercel.app/` to test the live URL and request indexing. Check that `https://pausenapk.vercel.app/sitemap.xml` is submitted. Google must recrawl before its cached favicon, site name, and snippets can change; this can take days or weeks. See Google's [favicon guidance](https://developers.google.com/search/docs/appearance/favicon-in-search) and [site name guidance](https://developers.google.com/search/docs/appearance/site-names).
+
+AI Overviews choose their own sources and wording. Clear, crawlable app information supports eligibility, but inclusion is not guaranteed. `llms.txt` is supplementary documentation; Google requires no special AI file or schema. See [Google's AI search guidance](https://developers.google.com/search/docs/appearance/ai-features).
+
 ## Optional Formgrid or Formspree
 
 No form account or endpoint was supplied. Email drafts are the fully working default. Once you create an endpoint that forwards to your address, configure its public HTTPS URL:
@@ -125,7 +137,7 @@ Verified with Android build-tools 36.0.0 `apksigner`. The integrity check also v
 - The public website repository is linked. The Android application's source is not included here; the “open source” marketing claim is omitted until a public app source repository and license are confirmed.
 - Play Protect is kept enabled. The guide explains scans and conditional “Install anyway” wording without promising that every Android warning offers a bypass. Restricted-settings and Play Protect help link Google's [official settings guide](https://support.google.com/android/answer/12623953) and [Play Protect guidance](https://support.google.com/googleplay/answer/2812853).
 - The bundled font is a Latin subset of Familjen Grotesk, served locally. Its SIL Open Font License is in `assets/fonts/OFL.txt`. Body text uses system fonts.
-- The initial compressed transfer is approximately 25 KiB, including HTML, CSS, JavaScript, the font, and the logo. The APK is downloaded only on request; the metadata image is for social crawlers. Raw source is larger than 45 KiB. No third-party resources are fetched on page load.
+- The initial compressed transfer is approximately 28 KiB, including HTML, CSS, JavaScript, the font, and the logo. The APK is downloaded only on request; the metadata image is for social crawlers. Raw source is larger than 45 KiB. No third-party resources are fetched on page load.
 
 ## Verification evidence
 

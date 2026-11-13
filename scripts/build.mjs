@@ -1,22 +1,18 @@
 import { copyFile, cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { root, getConfig, renderDocument, escapeHtml } from './config.mjs';
+import { root, getConfig, renderDocument, escapeHtml, publicPages, publicFiles, publicDirectories } from './config.mjs';
 
 const config = await getConfig();
 const output = join(root, 'dist');
 await mkdir(output, { recursive: true });
-for (const page of ['index.html', 'privacy.html']) {
+for (const page of publicPages) {
   await writeFile(join(output, page), renderDocument(await readFile(join(root, page), 'utf8'), page, config));
 }
-for (const file of ['styles.css', 'script.js', 'google9f3fb088d8fefe90.html', 'llms.txt', 'site.webmanifest', 'favicon.ico', 'favicon-48x48.png', 'apple-touch-icon.png']) {
-  try {
-    await copyFile(join(root, file), join(output, file));
-  } catch {}
+for (const file of publicFiles) {
+  await copyFile(join(root, file), join(output, file));
 }
-for (const directory of ['assets', 'downloads', '.well-known']) {
-  try {
-    await cp(join(root, directory), join(output, directory), { recursive: true });
-  } catch {}
+for (const directory of publicDirectories) {
+  await cp(join(root, directory), join(output, directory), { recursive: true });
 }
 const today = new Date().toISOString().split('T')[0];
 const pages = [

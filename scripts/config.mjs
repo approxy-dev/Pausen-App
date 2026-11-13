@@ -2,6 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 export const root = fileURLToPath(new URL('../', import.meta.url));
+export const publicPages = ['index.html', 'privacy.html'];
+export const publicFiles = ['styles.css', 'script.js', 'google9f3fb088d8fefe90.html', 'llms.txt', 'site.webmanifest', 'favicon.ico', 'favicon-48x48.png', 'apple-touch-icon.png'];
+export const publicDirectories = ['assets', 'downloads', '.well-known'];
+const sourceOrigin = 'https://pausenapk.vercel.app';
 export function validateSiteUrl(value) {
   if (!value) return '';
   const url = new URL(value);
@@ -33,7 +37,12 @@ export function renderDocument(html, page, config) {
   if (config.siteUrl) {
     const url = `${config.siteUrl}/${page === 'index.html' ? '' : page}`;
     meta.push(`<link rel="canonical" href="${escapeHtml(url)}">`, `<meta property="og:url" content="${escapeHtml(url)}">`);
-    html = html.replaceAll('content="assets/brand/social-preview.png"', `content="${escapeHtml(config.siteUrl)}/assets/brand/social-preview.png"`);
+    html = html.replaceAll('content="assets/brand/social-preview-wide.png"', `content="${escapeHtml(config.siteUrl)}/assets/brand/social-preview-wide.png"`);
+    html = html.replace(/(<script type="application\/ld\+json">)([\s\S]*?)(<\/script>)/g, (_, open, json, close) => {
+      const data = JSON.parse(json, (key, value) => typeof value === 'string' && (value === sourceOrigin || value.startsWith(`${sourceOrigin}/`))
+        ? config.siteUrl + value.slice(sourceOrigin.length) : value);
+      return `${open}\n  ${JSON.stringify(data, null, 2).replaceAll('<', '\\u003c')}\n  ${close}`;
+    });
   }
   if (!config.siteUrl || config.preview) meta.push('<meta name="robots" content="noindex, nofollow">');
   html = html.replace('<!-- deployment-meta -->', meta.join('\n  '));
