@@ -1,27 +1,32 @@
-Add-Type -AssemblyName System.Drawing
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName PresentationCore, WindowsBase
 
-$srcFile = "E:\SleepGuardian Mobile App\SG + WEB2\docs\brand\pausen-icon-512.png"
-$webDir = "E:\SleepGuardian Mobile App\SG + WEB2\website"
+$webDir = Split-Path -Parent $PSScriptRoot
 $brandDir = Join-Path $webDir "assets\brand"
+[xml]$logo = Get-Content -LiteralPath (Join-Path $brandDir 'pausen-mark.svg') -Raw
+if ($logo.svg.viewBox -ne '0 0 64 64') { throw 'Update the favicon scale for the new logo viewBox.' }
 
-if (-not (Test-Path $brandDir)) {
-    New-Item -ItemType Directory -Path $brandDir -Force | Out-Null
+# Render the canonical brand paths at each size on a fully opaque black tile.
+function Write-FaviconPng($destPath, $width) {
+    $visual = [System.Windows.Media.DrawingVisual]::new()
+    $drawing = $visual.RenderOpen()
+    try {
+        $drawing.DrawRectangle([System.Windows.Media.Brushes]::Black, $null, [System.Windows.Rect]::new(0, 0, $width, $width))
+        $drawing.PushTransform([System.Windows.Media.ScaleTransform]::new($width / 64.0, $width / 64.0))
+        foreach ($path in $logo.svg.path) {
+            $color = [System.Windows.Media.ColorConverter]::ConvertFromString($path.fill)
+            $brush = [System.Windows.Media.SolidColorBrush]::new($color)
+            $drawing.DrawGeometry($brush, $null, [System.Windows.Media.Geometry]::Parse($path.d))
+        }
+        $drawing.Pop()
+    } finally { $drawing.Close() }
+    $bitmap = [System.Windows.Media.Imaging.RenderTargetBitmap]::new($width, $width, 96, 96, [System.Windows.Media.PixelFormats]::Pbgra32)
+    $bitmap.Render($visual)
+    $encoder = [System.Windows.Media.Imaging.PngBitmapEncoder]::new()
+    $encoder.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($bitmap))
+    $stream = [System.IO.File]::Create($destPath)
+    try { $encoder.Save($stream) } finally { $stream.Dispose() }
 }
-
-function Resize-Png($srcBmp, $destPath, $w, $h) {
-    $dest = New-Object System.Drawing.Bitmap($w, $h, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
-    $g = [System.Drawing.Graphics]::FromImage($dest)
-    $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-    $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
-    $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
-    $g.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
-    $g.DrawImage($srcBmp, 0, 0, $w, $h)
-    $dest.Save($destPath, [System.Drawing.Imaging.ImageFormat]::Png)
-    $g.Dispose()
-    $dest.Dispose()
-}
-
-$bmp = [System.Drawing.Bitmap]::FromFile($srcFile)
 
 # 1. Generate individual PNG sizes
 $sizes = @(
@@ -36,7 +41,7 @@ $sizes = @(
 
 foreach ($s in $sizes) {
     $outPath = Join-Path $brandDir $s.Name
-    Resize-Png $bmp $outPath $s.Width $s.Height
+    Write-FaviconPng $outPath $s.Width
     Write-Output "Generated $($s.Name) ($($s.Width)x$($s.Height))"
 }
 
@@ -89,5 +94,4 @@ $ms.Close()
 [System.IO.File]::WriteAllBytes((Join-Path $brandDir "favicon.ico"), $icoBytes)
 [System.IO.File]::WriteAllBytes((Join-Path $webDir "favicon.ico"), $icoBytes)
 
-$bmp.Dispose()
 Write-Output "favicon.ico successfully generated at root and brand directory ($($icoBytes.Length) bytes)."
