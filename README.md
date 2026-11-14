@@ -39,13 +39,14 @@ Developed by [Approxy-dev](https://github.com/approxy-dev).
 
 ## About this repository
 
-The standalone showcase for Pausen v1.10.2 (Android code 8). Plain HTML, CSS, and JavaScript; no runtime packages or installation step. Everything needed for the website is inside this folder. The Android source, signing keys, credentials, App Bundle, and obfuscation maps are excluded.
+The standalone showcase for Pausen v1.10.2 (Android code 8) uses plain HTML, CSS, and JavaScript. The optional private feedback endpoint uses PostgreSQL. The Android source, signing keys, credentials, App Bundle, and obfuscation maps are excluded.
 
 ## Run locally
 
 From this folder, with Node.js 20 or newer:
 
 ```powershell
+npm ci
 npm run dev
 ```
 
@@ -65,7 +66,7 @@ The build writes only public assets to `dist/`. The development server serves cu
 - The three bedtime timeline points explain each stage.
 - Breathing is opt-in and follows 4 seconds in, 2 hold, 6 out. Stop at any time. It stops when the page is hidden. Reduced-motion users get static circles and changing text.
 - Mobile navigation supports Escape; phone tabs support arrow keys, Home, and End. Installation help uses native disclosures.
-- The contact form validates input and opens an email draft addressed to `approxydev@gmail.com`. It never claims the message was sent. The entered text remains on the page if an email handler is unavailable. Nothing is stored in browser storage.
+- The contact form opens an email draft by default. With private feedback enabled, it confirms delivery after the database accepts the message. It preserves the entered text on errors. Both modes work without browser storage.
 
 ## GitHub and Vercel
 
@@ -74,10 +75,11 @@ This repository is [approxy-dev/Pausen-App](https://github.com/approxy-dev/Pause
 ```powershell
 git clone https://github.com/approxy-dev/Pausen-App.git
 cd Pausen-App
+npm ci
 npm run dev
 ```
 
-In Vercel, import that repository using Framework Preset **Other**, Root Directory **./**, Build Command **node scripts/build.mjs**, and Output Directory **dist**. The tracked `vercel.json` sets the build/output settings, APK download headers, and browser security headers. No serverless function or paid service is needed for the website.
+In Vercel, import that repository using Framework Preset **Other**, Root Directory **./**, Build Command **node scripts/build.mjs**, and Output Directory **dist**. The tracked `vercel.json` sets the build/output settings, feedback function timeout, APK download headers, and browser security headers.
 
 The small build step generates absolute metadata and sitemap URLs. It uses Vercel's `VERCEL_PROJECT_PRODUCTION_URL` (or `VERCEL_URL` fallback). For a custom domain, set the public environment variable `SITE_URL` or configure it locally:
 
@@ -101,6 +103,20 @@ The crawl-report fixes keep titles under 60 characters and descriptions under 15
 After a production deployment, use Search Console's URL Inspection on `https://pausenapk.vercel.app/` to test the live URL and request indexing. Check that `https://pausenapk.vercel.app/sitemap.xml` is submitted. Google must recrawl before its cached favicon, site name, and snippets can change; this can take days or weeks. See Google's [favicon guidance](https://developers.google.com/search/docs/appearance/favicon-in-search) and [site name guidance](https://developers.google.com/search/docs/appearance/site-names).
 
 AI Overviews choose their own sources and wording. Clear, crawlable app information supports eligibility, but inclusion is not guaranteed. `llms.txt` is supplementary documentation; Google requires no special AI file or schema. See [Google's AI search guidance](https://developers.google.com/search/docs/appearance/ai-features).
+
+## Private website feedback
+
+The Pausen website can send feedback through a Vercel function to the Supabase project `toufdniikzwrycrpfuoo`. Visitors submit a name, email address and message. Read and delete messages from the owner account in the Supabase Table Editor by choosing the `pausen_private` schema and `feedback` table. Keep dashboard membership limited to the intended owner and enable MFA. Leave the schema outside the Data API’s exposed schemas.
+
+1. In the Pausen project's SQL Editor, apply `supabase/migrations/202611140001_private_feedback.sql` once. This creates new roles and tables in one transaction. The writer gets permission to call only the submission function. The tables have row level security enabled.
+2. In the database dashboard, set a long password-manager-generated password on `pausen_feedback_writer` and enable LOGIN for that role. With `psql`, use `\password pausen_feedback_writer` and then `ALTER ROLE pausen_feedback_writer LOGIN`. Keep the project administrator password in your password manager.
+3. In Supabase **Connect → Transaction pooler**, copy the hostname for this project. In the Pausen Vercel project’s **Production** environment, save `FEEDBACK_DATABASE_URL` as a secret using `postgresql://pausen_feedback_writer.toufdniikzwrycrpfuoo:<encoded-writer-password>@<project-pooler-host>:6543/postgres`. Percent-encode the password. The driver verifies TLS certificates. If a custom root is required, put the official Supabase PEM certificate in `FEEDBACK_DATABASE_CA`.
+4. Save a separate random 32-byte value as the Production secret `FEEDBACK_RATE_LIMIT_SECRET`, encoded as 64 hex characters. Set `FEEDBACK_ENABLED=true`, clear any external `FORM_ENDPOINT`, then deploy. The build validates the configuration and publishes only the public form URL. Preview builds use email drafts.
+5. Submit one synthetic message from the live website, confirm it appears in the private Table Editor, then delete the test message. Review and remove old support messages through the owner account. To switch back to email, set `FEEDBACK_ENABLED=false` and redeploy.
+
+PostgreSQL enforces the limits across simultaneous Vercel instances. A visitor gets five submissions per hour and the site shares a budget of 500 per day. Keyed IP identifiers rotate daily and old counters are cleared on later submissions. The database stores message content only in the feedback table. The API returns a confirmation without exposing a message list or record contents. `npm run test:feedback` verifies the endpoint and database grants in an isolated PostgreSQL engine using synthetic data.
+
+See the [Supabase connection guide](https://supabase.com/docs/guides/database/connecting-to-postgres) and [role permissions](https://supabase.com/docs/guides/database/postgres/roles).
 
 ## Optional Formgrid or Formspree
 

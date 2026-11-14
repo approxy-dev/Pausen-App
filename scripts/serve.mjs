@@ -3,17 +3,33 @@ import { readFile, stat } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import { join, resolve, sep, extname } from 'node:path';
 import { gzipSync } from 'node:zlib';
+import { Readable } from 'node:stream';
 import { root, getConfig, renderDocument, publicPages, publicFiles } from './config.mjs';
+import { configuredFeedbackHandler } from '../server/feedback-store.mjs';
 
 const port = Number(process.env.PORT || 4173);
+const localOrigin = `http://127.0.0.1:${port}`;
+const handleFeedback = configuredFeedbackHandler(localOrigin);
 const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/vnd.microsoft.icon', '.webmanifest': 'application/manifest+json; charset=utf-8', '.ttf': 'font/ttf', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.apk': 'application/vnd.android.package-archive' };
 const files = new Set([...publicPages, ...publicFiles, 'robots.txt', 'sitemap.xml', '.well-known/security.txt']);
 const security = { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'Cache-Control': 'no-store' };
 createServer(async (request, response) => {
   try {
-    if (!['GET', 'HEAD'].includes(request.method)) { response.writeHead(405, { Allow: 'GET, HEAD' }); response.end(); return; }
     const requestedUrl = new URL(request.url, 'http://localhost');
     const pathname = decodeURIComponent(requestedUrl.pathname);
+    if (pathname === '/api/feedback') {
+      const headers = new Headers(request.headers);
+      // Local callers must not be able to forge the proxy-supplied address.
+      headers.set('x-vercel-forwarded-for', request.socket.remoteAddress);
+      const result = await handleFeedback(new Request(`${localOrigin}${request.url}`, {
+        method: request.method, headers,
+        ...(!['GET', 'HEAD'].includes(request.method) ? { body: Readable.toWeb(request), duplex: 'half' } : {})
+      }));
+      response.writeHead(result.status, Object.fromEntries(result.headers));
+      response.end(Buffer.from(await result.arrayBuffer()));
+      return;
+    }
+    if (!['GET', 'HEAD'].includes(request.method)) { response.writeHead(405, { Allow: 'GET, HEAD' }); response.end(); return; }
     if (pathname === '/index.html') {
       response.writeHead(308, { ...security, Location: `/${requestedUrl.search}` });
       response.end(); return;

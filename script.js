@@ -153,7 +153,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 const contactForm = document.querySelector('#contact-form');
-contactForm.addEventListener('submit', event => {
+contactForm.addEventListener('submit', async event => {
   if (contactForm.elements._gotcha.value) { event.preventDefault(); return; }
   // A configured Formgrid/Formspree action uses the provider's normal POST flow.
   if (contactForm.dataset.delivery === 'provider') return;
@@ -162,8 +162,42 @@ contactForm.addEventListener('submit', event => {
   const email = contactForm.elements.email.value.trim();
   const message = contactForm.elements.message.value.trim();
   if (!name || !message) {
-    document.querySelector('#form-status').textContent = 'Please add your name and a message before opening a draft.';
+    document.querySelector('#form-status').textContent = 'Please add your name and a message.';
     (!name ? contactForm.elements.name : contactForm.elements.message).focus();
+    return;
+  }
+  if (contactForm.dataset.delivery === 'private') {
+    const button = contactForm.querySelector('button[type="submit"]');
+    if (button.disabled) return;
+    const status = document.querySelector('#form-status');
+    const label = document.querySelector('#submit-label');
+    button.disabled = true;
+    contactForm.setAttribute('aria-busy', 'true');
+    label.textContent = 'Sending…';
+    status.textContent = 'Sending your feedback…';
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST', credentials: 'omit', redirect: 'error', signal: controller.signal,
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ name, email, message, _gotcha: '' })
+      });
+      const result = await response.json();
+      if (response.status === 201 && result.ok === true) {
+        contactForm.reset();
+        status.textContent = 'Thank you. Your feedback has been saved privately for Approxy-dev.';
+      } else {
+        status.textContent = result.error?.message || 'Your feedback was not confirmed. Please try again or email approxydev@gmail.com.';
+      }
+    } catch {
+      status.textContent = 'Delivery could not be confirmed. Your message is still here. Please try again later or email approxydev@gmail.com.';
+    } finally {
+      clearTimeout(timeout);
+      button.disabled = false;
+      contactForm.removeAttribute('aria-busy');
+      label.textContent = 'Send feedback';
+    }
     return;
   }
   const subject = `Pausen feedback from ${name}`;

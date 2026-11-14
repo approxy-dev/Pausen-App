@@ -27,4 +27,4 @@ const robotsContent = config.preview
 await writeFile(join(output, 'robots.txt'), robotsContent);
 console.log(`Built static site in ${output}`);
 console.log(config.siteUrl ? `Public URLs: ${config.siteUrl}` : 'No public URL yet. Local output is noindex; Vercel supplies its deployment domain automatically.');
-console.log(config.formEndpoint ? 'Contact delivery: configured form provider.' : 'Contact delivery: email draft (no message is automatically sent).');
+console.log(config.feedbackEnabled ? 'Contact delivery: private feedback endpoint.' : config.formEndpoint ? 'Contact delivery: configured form provider.' : 'Contact delivery: email draft (no message is automatically sent).');

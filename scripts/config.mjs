@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { getFeedbackConfig } from '../server/feedback-config.mjs';
 
 export const root = fileURLToPath(new URL('../', import.meta.url));
 export const publicPages = ['index.html', 'privacy.html'];
@@ -25,10 +26,15 @@ export function validateFormEndpoint(value) {
 export async function getConfig() {
   const stored = JSON.parse(await readFile(new URL('../site.config.json', import.meta.url), 'utf8'));
   const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  const feedbackEnabled = getFeedbackConfig().enabled;
+  if (feedbackEnabled && (process.env.FORM_ENDPOINT || stored.formEndpoint)) {
+    throw new Error('Choose Supabase feedback or an external form endpoint, not both.');
+  }
   return {
     siteUrl: validateSiteUrl(process.env.SITE_URL || stored.siteUrl || (vercelHost ? `https://${vercelHost}` : '')),
     formEndpoint: validateFormEndpoint(process.env.FORM_ENDPOINT || stored.formEndpoint || ''),
-    preview: process.env.VERCEL_ENV === 'preview'
+    preview: process.env.VERCEL_ENV === 'preview',
+    feedbackEnabled
   };
 }
 export const escapeHtml = value => value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
@@ -46,7 +52,12 @@ export function renderDocument(html, page, config) {
   }
   if (!config.siteUrl || config.preview) meta.push('<meta name="robots" content="noindex, nofollow">');
   html = html.replace('<!-- deployment-meta -->', meta.join('\n  '));
-  if (config.formEndpoint) {
+  if (config.feedbackEnabled && !config.preview) {
+    html = html.replace('action="mailto:approxydev@gmail.com" method="get" data-delivery="email"', 'action="/api/feedback" method="post" data-delivery="private"')
+      .replace('id="submit-label">Open email draft', 'id="submit-label">Send feedback')
+      .replace('Opens your email app.<br>You review the draft before sending.', 'Sent privately to Approxy-dev.<br>Please share only what’s needed.')
+      .replace(/<p id="website-contact-policy">[\s\S]*?<\/p>/, '<p id="website-contact-policy">When you submit feedback, your name, email address, and message are sent over HTTPS through Vercel and stored in our private Supabase database so Approxy-dev can read and respond. Messages are not published on the website or GitHub. The submission service can add messages but cannot read stored feedback. Short-lived keyed identifiers derived from your IP address help limit abuse; the feedback database does not store your raw IP address. Vercel and Supabase also process technical request information to operate their services. Feedback is kept until it is no longer needed for support, or you request deletion. You can use the direct email link instead.</p>');
+  } else if (config.formEndpoint) {
     html = html.replace('action="mailto:approxydev@gmail.com" method="get" data-delivery="email"', `action="${escapeHtml(config.formEndpoint)}" method="post" data-delivery="provider"`)
       .replace('id="submit-label">Open email draft', 'id="submit-label">Send message')
       .replace('Opens your email app.<br>You review the draft before sending.', 'Sends through our form provider.<br>Please share only what’s needed.')

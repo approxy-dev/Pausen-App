@@ -3,12 +3,21 @@
   "version": "1.10.2",
   "private": true,
   "type": "module",
-  "description": "Pausen's standalone, dependency-free Android showcase website",
+  "description": "Pausen's Android showcase website with optional private feedback storage",
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "build": "node scripts/build.mjs",
-    "check": "node --check script.js && node scripts/check.mjs",
+    "check": "node --check script.js && node scripts/check.mjs && node --test tests/*.test.mjs",
+    "test:feedback": "node --test tests/*.test.mjs",
     "configure": "node scripts/configure.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "postgres": "4.1.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.16"
+  }
 }

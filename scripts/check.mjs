@@ -98,6 +98,14 @@ assert(vercel.redirects.some(rule => rule.source === '/index.html' && rule.desti
 const providerPrivacy = renderDocument(privacy, 'privacy.html', { siteUrl: 'https://pausen.example', formEndpoint: 'https://formspree.io/f/test' });
 assert(providerPrivacy.includes('configured form provider'));
 assert(!providerPrivacy.includes('It does not send a message automatically'));
+const privateConfig = { siteUrl: 'https://pausen.example', feedbackEnabled: true };
+const privateContact = renderDocument(index, 'index.html', privateConfig);
+assert(privateContact.includes('action="/api/feedback" method="post" data-delivery="private"'));
+assert(privateContact.includes('id="submit-label">Send feedback'));
+const privatePrivacy = renderDocument(privacy, 'privacy.html', privateConfig);
+assert(privatePrivacy.includes('private Supabase database'));
+assert(!privatePrivacy.includes('It does not send a message automatically'));
+assert(renderDocument(index, 'index.html', { ...privateConfig, preview: true }).includes('data-delivery="email"'));
 assert.throws(() => validateSiteUrl('https://site.example/not-the-root'));
 assert.throws(() => validateFormEndpoint('javascript:alert(1)'));
 console.log(`PASS: canonical links and redirect, metadata budgets, social preview dimensions, image alternatives, APK integrity, favicons, linked site/app metadata, visible FAQs, preview indexing controls, contact modes, and URL validation.\nInitial page assets: ${(raw / 1024).toFixed(1)} KiB raw / ${(transferred / 1024).toFixed(1)} KiB gzip (45 KiB transfer budget).\nAPK: ${apk.length} bytes; SHA-256 verified.`);
