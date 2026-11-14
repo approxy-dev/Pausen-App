@@ -2,5 +2,6 @@
 /evidence/
 /node_modules/
 /.vercel/
+/supabase/.temp/
 .env*
 *.log

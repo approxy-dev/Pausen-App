@@ -1,23 +1,20 @@
-import postgres from 'postgres';
 import { getFeedbackConfig } from './feedback-config.mjs';
 import { createFeedbackHandler } from './feedback-handler.mjs';
 
-export function createFeedbackStore(config) {
-  const sql = postgres(config.databaseUrl, {
-    max: 1, max_pipeline: 1, prepare: false,
-    connect_timeout: 5, query_timeout: 8, idle_timeout: 20,
-    ssl: { rejectUnauthorized: true, ...(config.databaseCa ? { ca: config.databaseCa } : {}) },
-    onnotice: () => {},
-    connection: { application_name: 'pausen-feedback' }
-  });
+export function createFeedbackStore(config, send = fetch) {
   return {
     async save({ name, email, message, clientKey }) {
-      const [result] = await sql`
-        select pausen_private.submit_feedback(${name}, ${email}, ${message}, ${clientKey}) as accepted
-      `;
-      return result?.accepted === true;
-    },
-    close: () => sql.end({ timeout: 5 })
+      const response = await send(config.submissionUrl, {
+        method: 'POST', redirect: 'error', signal: AbortSignal.timeout(8000),
+        headers: { apikey: config.publishableKey, 'x-pausen-submission-key': config.submissionKey,
+          'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ p_name: name, p_email: email, p_message: message, p_client_key: clientKey })
+      });
+      if (!response.ok) throw new Error('Feedback storage unavailable');
+      const accepted = await response.json();
+      if (typeof accepted !== 'boolean') throw new Error('Unexpected feedback result');
+      return accepted;
+    }
   };
 }
 

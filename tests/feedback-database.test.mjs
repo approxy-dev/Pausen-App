@@ -1,6 +1,6 @@
 import { before, beforeEach, after, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 
 let db;
@@ -8,10 +8,35 @@ const clientKey = 'a'.repeat(64);
 before(async () => {
   db = new PGlite();
   await db.exec('create role anon; create role authenticated; create role service_role bypassrls;');
-  await db.exec(await readFile(new URL('../supabase/migrations/202611140001_private_feedback.sql', import.meta.url), 'utf8'));
+  const migrations = new URL('../supabase/migrations/', import.meta.url);
+  for (const name of (await readdir(migrations)).filter(name => name.endsWith('.sql')).sort()) {
+    await db.exec(await readFile(new URL(name, migrations), 'utf8'));
+  }
 });
 beforeEach(async () => { await db.exec('reset role; truncate pausen_private.feedback, pausen_private.feedback_limits restart identity;'); });
 after(async () => { await db?.close(); });
+
+test('the HTTPS path verifies the server credential and cannot expose tables to the API role', async () => {
+  const token = 'c'.repeat(64);
+  await db.query('insert into pausen_private.feedback_write_credential(token_hash) values (sha256(convert_to($1,\'UTF8\')))', [token]);
+  await db.exec('set role anon');
+  const viaApi = () => db.query('select public.pausen_submit_feedback($1,$2,$3,$4) as accepted', ['Reader','reader@example.com','Synthetic check',clientKey]);
+  const headers = value => db.query("select set_config('request.headers',$1,false)", [JSON.stringify(value)]);
+  await headers({});
+  await assert.rejects(viaApi(), { code:'PT403' });
+  await headers({ 'x-pausen-submission-key':'d'.repeat(64) });
+  await assert.rejects(viaApi(), { code:'PT403' });
+  await headers({ 'x-pausen-submission-key':token });
+  assert.equal((await viaApi()).rows[0].accepted, true);
+  await assert.rejects(db.query('select token_hash from pausen_private.feedback_write_credential'), { code:'42501' });
+  await assert.rejects(db.query('select message from pausen_private.feedback'), { code:'42501' });
+  await db.exec('reset role');
+  const { rows } = await db.query('select count(*)::int as count from pausen_private.feedback');
+  assert.equal(rows[0].count, 1);
+  await db.exec('set role authenticated');
+  await assert.rejects(viaApi(), { code:'42501' });
+  await db.exec('reset role');
+});
 async function submit(key = clientKey, message = 'A useful suggestion.') {
   const result = await db.query('select pausen_private.submit_feedback($1, $2, $3, $4) as accepted', ['Reader', 'reader@example.com', message, key]);
   return result.rows[0].accepted;

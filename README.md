@@ -106,17 +106,17 @@ AI Overviews choose their own sources and wording. Clear, crawlable app informat
 
 ## Private website feedback
 
-The Pausen website can send feedback through a Vercel function to the Supabase project `toufdniikzwrycrpfuoo`. Visitors submit a name, email address and message. Read and delete messages from the owner account in the Supabase Table Editor by choosing the `pausen_private` schema and `feedback` table. Keep dashboard membership limited to the intended owner and enable MFA. Leave the schema outside the Data API’s exposed schemas.
+The Pausen website sends feedback through a Vercel function to the Supabase project `toufdniikzwrycrpfuoo`. Visitors submit a name, email address and message. Read and delete messages from the owner account in the Supabase Table Editor by choosing the `pausen_private` schema and `feedback` table. Keep dashboard membership limited to the intended owner and enable MFA. Leave `pausen_private` and `pausen_gateway` outside the Data API’s exposed schemas.
 
-1. In the Pausen project's SQL Editor, apply `supabase/migrations/202611140001_private_feedback.sql` once. This creates new roles and tables in one transaction. The writer gets permission to call only the submission function. The tables have row level security enabled.
-2. In the database dashboard, set a long password-manager-generated password on `pausen_feedback_writer` and enable LOGIN for that role. With `psql`, use `\password pausen_feedback_writer` and then `ALTER ROLE pausen_feedback_writer LOGIN`. Keep the project administrator password in your password manager.
-3. In Supabase **Connect → Transaction pooler**, copy the hostname for this project. In the Pausen Vercel project’s **Production** environment, save `FEEDBACK_DATABASE_URL` as a secret using `postgresql://pausen_feedback_writer.toufdniikzwrycrpfuoo:<encoded-writer-password>@<project-pooler-host>:6543/postgres`. Percent-encode the password. The driver verifies TLS certificates. If a custom root is required, put the official Supabase PEM certificate in `FEEDBACK_DATABASE_CA`.
+1. The migrations in `supabase/migrations/` create the private tables, the restricted writer and an HTTPS RPC named `pausen_submit_feedback`. The hosted migration history records which migrations are already applied.
+2. In Vercel Production, configure `FEEDBACK_PUBLISHABLE_KEY` with the Pausen project’s publishable key. The server connects to the fixed project URL over HTTPS. The database writer uses `NOLOGIN`.
+3. Generate 32 random bytes as a lowercase hex string. Save the string as the Vercel Production secret `FEEDBACK_SUBMISSION_KEY`. Store its SHA-256 digest, calculated over the UTF-8 hex string, in the singleton row `pausen_private.feedback_write_credential.token_hash`. Only the digest belongs in the database. The RPC requires the matching credential in a server-supplied header.
 4. Save a separate random 32-byte value as the Production secret `FEEDBACK_RATE_LIMIT_SECRET`, encoded as 64 hex characters. Set `FEEDBACK_ENABLED=true`, clear any external `FORM_ENDPOINT`, then deploy. The build validates the configuration and publishes only the public form URL. Preview builds use email drafts.
 5. Submit one synthetic message from the live website, confirm it appears in the private Table Editor, then delete the test message. Review and remove old support messages through the owner account. To switch back to email, set `FEEDBACK_ENABLED=false` and redeploy.
 
 PostgreSQL enforces the limits across simultaneous Vercel instances. A visitor gets five submissions per hour and the site shares a budget of 500 per day. Keyed IP identifiers rotate daily and old counters are cleared on later submissions. The database stores message content only in the feedback table. The API returns a confirmation without exposing a message list or record contents. `npm run test:feedback` verifies the endpoint and database grants in an isolated PostgreSQL engine using synthetic data.
 
-See the [Supabase connection guide](https://supabase.com/docs/guides/database/connecting-to-postgres) and [role permissions](https://supabase.com/docs/guides/database/postgres/roles).
+See [Supabase API access controls](https://supabase.com/docs/guides/api/securing-your-api) and [role permissions](https://supabase.com/docs/guides/database/postgres/roles).
 
 ## Optional Formgrid or Formspree
 

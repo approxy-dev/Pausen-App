@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createFeedbackHandler } from '../server/feedback-handler.mjs';
 import { getFeedbackConfig, feedbackProjectRef } from '../server/feedback-config.mjs';
+import { createFeedbackStore } from '../server/feedback-store.mjs';
 
 const origin = 'https://pausenapk.vercel.app';
 const valid = { name: 'A reader', email: 'reader@example.com', message: 'Please add another bedtime option.', _gotcha: '' };
@@ -103,18 +104,35 @@ test('feature stays unavailable until explicitly enabled; previews never write',
   assert.equal((await handler(request())).status, 503);
 });
 
-test('configuration requires the specific restricted role and rejects insecure or unexpected connections', () => {
+test('configuration pins the HTTPS project and refuses an admin key or weak server credentials', () => {
   const env = {
     FEEDBACK_ENABLED: 'true', FEEDBACK_RATE_LIMIT_SECRET: 'c'.repeat(64),
-    FEEDBACK_DATABASE_URL: `postgresql://pausen_feedback_writer.${feedbackProjectRef}:test-password@aws-0-test.pooler.supabase.com:6543/postgres`
+    FEEDBACK_PUBLISHABLE_KEY: 'sb_publishable_' + 'x'.repeat(24), FEEDBACK_SUBMISSION_KEY: 'd'.repeat(64)
   };
-  assert.equal(getFeedbackConfig(env).origin, origin);
+  const result = getFeedbackConfig(env);
+  assert.equal(result.origin, origin);
+  assert.equal(result.submissionUrl, `https://${feedbackProjectRef}.supabase.co/rest/v1/rpc/pausen_submit_feedback`);
   assert.throws(() => getFeedbackConfig({ ...env, FEEDBACK_RATE_LIMIT_SECRET: 'short' }));
-  for (const url of [env.FEEDBACK_DATABASE_URL.replace('pausen_feedback_writer', 'postgres'),
-    env.FEEDBACK_DATABASE_URL.replace(feedbackProjectRef, 'anotherproject'),
-    env.FEEDBACK_DATABASE_URL.replace('pooler.supabase.com', 'attacker.example'),
-    env.FEEDBACK_DATABASE_URL + '?sslmode=disable', env.FEEDBACK_DATABASE_URL.replace(':6543', ':5432')]) {
-    assert.throws(() => getFeedbackConfig({ ...env, FEEDBACK_DATABASE_URL: url }));
-  }
+  assert.throws(() => getFeedbackConfig({ ...env, FEEDBACK_PUBLISHABLE_KEY: 'sb_secret_' + 'x'.repeat(24) }));
+  assert.throws(() => getFeedbackConfig({ ...env, FEEDBACK_SUBMISSION_KEY: '' }));
+  assert.throws(() => getFeedbackConfig({ ...env, FEEDBACK_SUBMISSION_KEY: env.FEEDBACK_RATE_LIMIT_SECRET }));
   assert.throws(() => getFeedbackConfig({ ...env, SITE_URL: 'http://pausenapk.vercel.app' }));
+});
+
+test('storage distinguishes a rate limit from an unconfirmed submission', async () => {
+  const config = { submissionUrl:'https://pausen.example/rest/v1/rpc/pausen_submit_feedback', publishableKey:'public-test', submissionKey:'test-secret' };
+  const validRow = { ...valid, clientKey:'a'.repeat(64) };
+  for (const accepted of [true,false]) {
+    const store = createFeedbackStore(config, async (url, options) => {
+      assert.equal(url, config.submissionUrl);
+      assert.equal(options.headers['x-pausen-submission-key'],config.submissionKey);
+      assert.equal(options.redirect,'error');
+      assert.deepEqual(JSON.parse(options.body), { p_name:valid.name, p_email:valid.email, p_message:valid.message, p_client_key:validRow.clientKey });
+      return Response.json(accepted);
+    });
+    assert.equal(await store.save(validRow),accepted);
+  }
+  for (const response of [Response.json({}, {status:403}), Response.json(null)]) {
+    await assert.rejects(createFeedbackStore(config, async () => response).save(validRow));
+  }
 });
