@@ -96,7 +96,9 @@ See Vercel's [build configuration](https://vercel.com/docs/builds/configure-a-bu
 
 The homepage identifies Pausen, Approxy-dev, and the Android package `com.sleepguardian.app` in visible content and linked `WebSite`, `WebPage`, and `SoftwareApplication` metadata. Structured URLs follow the configured canonical origin. No unverified star ratings are published.
 
-Both pages declare the existing 96×96 PNG favicon and root ICO at stable URLs. The preview serves these files with their image MIME types, and the build fails if required public assets cannot be copied. `npm run check` verifies icon dimensions, metadata relationships, and visible FAQ consistency.
+Both pages point to the same 96×96 PNG favicon with the original Pausen mark on opaque black. The root `/favicon.ico` serves browsers that request it directly. The homepage supplies the canonical hostname as Google's fallback if it cannot select the preferred site name, Pausen.
+
+Both pages link to `/llms.txt`, which lists the Android installation guide, privacy notice, signed APK, checksum and release notes. The build and local server use the configured site URL for those links, the sitemap and the robots.txt sitemap directive. The sitemap lists the two public pages without assigning a new modification date at each build.
 
 The crawl-report fixes keep titles under 60 characters and descriptions under 155, give logo images descriptive alternatives and titles, and use a 1717×916 social preview for both Open Graph and X. `/index.html` permanently redirects to `/`; internal links use the canonical homepage. Multiple H2 headings are intentional sections beneath each page's single H1, not an SEO error.
 

@@ -4,14 +4,14 @@ import { createReadStream } from 'node:fs';
 import { join, resolve, sep, extname } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { Readable } from 'node:stream';
-import { root, getConfig, renderDocument, publicPages, publicFiles } from './config.mjs';
+import { root, getConfig, renderDocument, renderDiscoveryFile, discoveryFiles, publicPages, publicFiles } from './config.mjs';
 import { configuredFeedbackHandler } from '../server/feedback-store.mjs';
 
 const port = Number(process.env.PORT || 4173);
 const localOrigin = `http://127.0.0.1:${port}`;
 const handleFeedback = configuredFeedbackHandler(localOrigin);
 const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/vnd.microsoft.icon', '.webmanifest': 'application/manifest+json; charset=utf-8', '.ttf': 'font/ttf', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.apk': 'application/vnd.android.package-archive' };
-const files = new Set([...publicPages, ...publicFiles, 'robots.txt', 'sitemap.xml', '.well-known/security.txt']);
+const files = new Set([...publicPages, ...publicFiles, ...discoveryFiles, '.well-known/security.txt']);
 const security = { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'Cache-Control': 'no-store' };
 createServer(async (request, response) => {
   try {
@@ -53,6 +53,7 @@ createServer(async (request, response) => {
     }
     let body = await readFile(path);
     if (extension === '.html') body = Buffer.from(renderDocument(body.toString(), relative, await getConfig()));
+    if (discoveryFiles.includes(relative)) body = Buffer.from(renderDiscoveryFile(body.toString(), relative, await getConfig()));
     if (/\bgzip\b/.test(request.headers['accept-encoding'] || '')) {
       body = gzipSync(body);
       headers['Content-Encoding'] = 'gzip';

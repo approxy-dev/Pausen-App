@@ -3,7 +3,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
-import { root, renderDocument, validateSiteUrl, validateFormEndpoint } from './config.mjs';
+import { root, publicPages, renderDocument, renderDiscoveryFile, validateSiteUrl, validateFormEndpoint } from './config.mjs';
 
 const index = await readFile(join(root, 'index.html'), 'utf8');
 const privacy = await readFile(join(root, 'privacy.html'), 'utf8');
@@ -68,6 +68,7 @@ const website = graph.find(item => item['@type'] === 'WebSite');
 const application = graph.find(item => item['@type'] === 'SoftwareApplication');
 assert.equal(website.name, 'Pausen');
 assert.equal(website.url, 'https://pausen.example/');
+assert.equal(website.alternateName.at(-1), new URL(website.url).hostname);
 assert.equal(application.url, website.url);
 assert.equal(application.downloadUrl, 'https://pausen.example/downloads/Pausen-1.10.2.apk');
 assert.equal(application.identifier, 'com.sleepguardian.app');
@@ -82,8 +83,11 @@ for (const question of graph.find(item => item['@type'] === 'FAQPage').mainEntit
   assert(visibleText.includes(question.acceptedAnswer.text), `FAQ answer differs from the visible page: ${question.name}`);
 }
 for (const html of [index, privacy]) {
+  assert.equal([...html.matchAll(/<link rel="icon"/g)].length, 1, 'Declare one primary favicon');
+  assert(html.includes('<link rel="describedby" href="/llms.txt" type="text/plain">'), 'Link to the public app guide');
   const pngIcon = html.match(/<link rel="icon" href="([^"]+)" type="image\/png" sizes="(\d+)x(\d+)">/);
   assert(pngIcon, 'Each page must declare a PNG favicon');
+  assert.equal(pngIcon[1], '/assets/brand/favicon-96x96.png', 'Keep the same stable favicon URL across the site');
   const png = await readFile(join(root, pngIcon[1]));
   assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', 'The declared favicon must be a PNG');
   assert.equal(png.readUInt32BE(16), Number(pngIcon[2]));
@@ -91,6 +95,26 @@ for (const html of [index, privacy]) {
   assert.equal(pngIcon[2], pngIcon[3], 'The search favicon must be square');
   assert(Number(pngIcon[2]) > 48, 'Use a favicon larger than 48 pixels');
 }
+const publicConfig = { siteUrl: 'https://pausen.example', preview: false };
+const guide = renderDiscoveryFile(await readFile(join(root, 'llms.txt'), 'utf8'), 'llms.txt', publicConfig);
+const links = [...guide.matchAll(/^- \[[^\]]+\]\((https:\/\/[^)]+)\)/gm)].map(match => new URL(match[1]));
+assert(links.some(link => link.href === website.url), 'The guide must link to the canonical homepage');
+assert(links.some(link => link.href === application.downloadUrl), 'The guide must link to the same signed APK as the app metadata');
+assert(!guide.includes('https://pausenapk.vercel.app'), 'The guide must follow the configured origin');
+for (const link of links.filter(link => link.origin === publicConfig.siteUrl)) {
+  const path = join(root, link.pathname === '/' ? 'index.html' : link.pathname);
+  assert((await stat(path)).isFile(), `Missing llms.txt target: ${link.pathname}`);
+  if (link.hash) assert((await readFile(path, 'utf8')).includes(`id="${link.hash.slice(1)}"`), `Missing llms.txt anchor: ${link.hash}`);
+}
+const robotsSource = await readFile(join(root, 'robots.txt'), 'utf8');
+const sitemapSource = await readFile(join(root, 'sitemap.xml'), 'utf8');
+const sitemap = renderDiscoveryFile(sitemapSource, 'sitemap.xml', publicConfig);
+assert.deepEqual([...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]),
+  publicPages.map(page => new URL(page === 'index.html' ? '/' : page, website.url).href));
+assert(renderDiscoveryFile(robotsSource, 'robots.txt', publicConfig).includes(`Sitemap: ${website.url}sitemap.xml`));
+const previewConfig = { ...publicConfig, preview: true };
+assert(renderDiscoveryFile(robotsSource, 'robots.txt', previewConfig).includes('Disallow: /'));
+assert(!renderDiscoveryFile(sitemapSource, 'sitemap.xml', previewConfig).includes('<loc>'));
 const preview = renderDocument(index, 'index.html', { siteUrl: 'https://pausen.example', formEndpoint: '', preview: true });
 assert(preview.includes('noindex, nofollow'), 'Preview deployments must remain noindex');
 const vercel = JSON.parse(await readFile(join(root, 'vercel.json'), 'utf8'));
@@ -108,4 +132,4 @@ assert(!privatePrivacy.includes('It does not send a message automatically'));
 assert(renderDocument(index, 'index.html', { ...privateConfig, preview: true }).includes('data-delivery="email"'));
 assert.throws(() => validateSiteUrl('https://site.example/not-the-root'));
 assert.throws(() => validateFormEndpoint('javascript:alert(1)'));
-console.log(`PASS: canonical links and redirect, metadata budgets, social preview dimensions, image alternatives, APK integrity, favicons, linked site/app metadata, visible FAQs, preview indexing controls, contact modes, and URL validation.\nInitial page assets: ${(raw / 1024).toFixed(1)} KiB raw / ${(transferred / 1024).toFixed(1)} KiB gzip (45 KiB transfer budget).\nAPK: ${apk.length} bytes; SHA-256 verified.`);
+console.log(`PASS: canonical links and redirect, metadata budgets, social preview dimensions, image alternatives, APK integrity, favicons, linked site/app metadata, visible FAQs, llms.txt links, sitemap and robots rules, preview indexing controls, contact modes, and URL validation.\nInitial page assets: ${(raw / 1024).toFixed(1)} KiB raw / ${(transferred / 1024).toFixed(1)} KiB gzip (45 KiB transfer budget).\nAPK: ${apk.length} bytes; SHA-256 verified.`);

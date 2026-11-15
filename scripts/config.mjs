@@ -4,9 +4,11 @@ import { getFeedbackConfig } from '../server/feedback-config.mjs';
 
 export const root = fileURLToPath(new URL('../', import.meta.url));
 export const publicPages = ['index.html', 'privacy.html'];
-export const publicFiles = ['styles.css', 'script.js', 'google9f3fb088d8fefe90.html', 'llms.txt', 'site.webmanifest', 'favicon.ico', 'favicon-48x48.png', 'apple-touch-icon.png'];
+export const publicFiles = ['styles.css', 'script.js', 'google9f3fb088d8fefe90.html', 'site.webmanifest', 'favicon.ico', 'favicon-48x48.png', 'apple-touch-icon.png'];
+export const discoveryFiles = ['llms.txt', 'robots.txt', 'sitemap.xml'];
 export const publicDirectories = ['assets', 'downloads', '.well-known'];
 const sourceOrigin = 'https://pausenapk.vercel.app';
+const sourceHostname = new URL(sourceOrigin).hostname;
 export function validateSiteUrl(value) {
   if (!value) return '';
   const url = new URL(value);
@@ -38,6 +40,15 @@ export async function getConfig() {
   };
 }
 export const escapeHtml = value => value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+export function renderDiscoveryFile(source, file, { siteUrl, preview }) {
+  if (preview || !siteUrl) {
+    if (file === 'robots.txt') return 'User-agent: *\nDisallow: /\n';
+    if (file === 'sitemap.xml') return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>\n';
+  }
+  if (!siteUrl) return source;
+  const origin = file === 'sitemap.xml' ? escapeHtml(siteUrl) : siteUrl;
+  return source.replaceAll(`${sourceOrigin}/`, () => `${origin}/`);
+}
 export function renderDocument(html, page, config) {
   const meta = [];
   if (config.siteUrl) {
@@ -45,8 +56,14 @@ export function renderDocument(html, page, config) {
     meta.push(`<link rel="canonical" href="${escapeHtml(url)}">`, `<meta property="og:url" content="${escapeHtml(url)}">`);
     html = html.replaceAll('content="assets/brand/social-preview-wide.png"', `content="${escapeHtml(config.siteUrl)}/assets/brand/social-preview-wide.png"`);
     html = html.replace(/(<script type="application\/ld\+json">)([\s\S]*?)(<\/script>)/g, (_, open, json, close) => {
-      const data = JSON.parse(json, (key, value) => typeof value === 'string' && (value === sourceOrigin || value.startsWith(`${sourceOrigin}/`))
-        ? config.siteUrl + value.slice(sourceOrigin.length) : value);
+      const hostname = new URL(config.siteUrl).hostname;
+      const data = JSON.parse(json, (key, value) => {
+        if (value === sourceHostname) return hostname;
+        if (typeof value === 'string' && (value === sourceOrigin || value.startsWith(`${sourceOrigin}/`))) {
+          return config.siteUrl + value.slice(sourceOrigin.length);
+        }
+        return value;
+      });
       return `${open}\n  ${JSON.stringify(data, null, 2).replaceAll('<', '\\u003c')}\n  ${close}`;
     });
   }
