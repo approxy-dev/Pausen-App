@@ -1,8 +1,15 @@
 # Pausen
 
-> Pausen is a free Android app by Approxy-dev for scheduling bedtime curfews, using a warm reading tint, and taking 12-second breathing breaks from scrolling. It works offline on Android 10 and newer.
+> Pausen is a free, 100% offline Android app by Approxy-dev for scheduling bedtime curfews, applying a warm reading screen tint, and interrupting doomscrolling with 12-second breathing pauses. Supports Android 10 and newer (API 29+).
 
-The app was previously called SleepGuardian Mobile. Its Android package ID is `com.sleepguardian.app`. Bedtime plans and scroll history stay on the device. The app requires no account or internet permission.
+Pausen was previously developed as SleepGuardian Mobile. Its Android package ID is `com.sleepguardian.app`. Unlike cloud-based screen-time or digital wellbeing apps, Pausen omits the Android `INTERNET` permission entirely—bedtime plans, app limits, and scroll history stay strictly in a local SQLite database on the device with zero accounts, zero ads, and zero trackers.
+
+## Key capabilities
+
+- **Bedtime curfew & wind-down:** Automated evening wind-down schedule, warm amber screen tint, and bedtime curfew that protects sleep hours until morning.
+- **Mindful scroll pause:** Detects continuous scrolling in social media feeds (Instagram, TikTok, YouTube) and triggers a 12-second breathing rhythm (4s inhale, 2s hold, 6s exhale), with an optional 24-hour commitment lock.
+- **Strict self-control guards:** On-device Settings and uninstall guards plus clock-change defenses during protected periods.
+- **Offline privacy:** No `INTERNET` permission, no telemetry, no analytics SDK, no login.
 
 ## App and installation
 

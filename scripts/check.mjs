@@ -87,7 +87,7 @@ for (const html of [index, privacy]) {
   assert(html.includes('<link rel="describedby" href="/llms.txt" type="text/plain">'), 'Link to the public app guide');
   const pngIcon = html.match(/<link rel="icon" href="([^"]+)" type="image\/png" sizes="(\d+)x(\d+)">/);
   assert(pngIcon, 'Each page must declare a PNG favicon');
-  assert.equal(pngIcon[1], '/assets/brand/favicon-96x96.png', 'Keep the same stable favicon URL across the site');
+  assert.equal(pngIcon[1], '/assets/brand/favicon-black-96x96.png', 'Keep the same stable favicon URL across the site');
   const png = await readFile(join(root, pngIcon[1]));
   assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', 'The declared favicon must be a PNG');
   assert.equal(png.readUInt32BE(16), Number(pngIcon[2]));
