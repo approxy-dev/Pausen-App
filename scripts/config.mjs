@@ -4,7 +4,7 @@ import { getFeedbackConfig } from '../server/feedback-config.mjs';
 
 export const root = fileURLToPath(new URL('../', import.meta.url));
 export const publicPages = ['index.html', 'privacy.html'];
-export const publicFiles = ['styles.css', 'script.js', 'google9f3fb088d8fefe90.html', 'site.webmanifest', 'favicon.ico', 'favicon-48x48.png', 'apple-touch-icon.png'];
+export const publicFiles = ['styles.css', 'script.js', 'google9f3fb088d8fefe90.html', 'BingSiteAuth.xml', 'site.webmanifest', 'favicon.ico', 'favicon-48x48.png', 'apple-touch-icon.png'];
 export const discoveryFiles = ['llms.txt', 'robots.txt', 'sitemap.xml'];
 export const publicDirectories = ['assets', 'downloads', '.well-known'];
 const sourceOrigin = 'https://pausenapk.vercel.app';
